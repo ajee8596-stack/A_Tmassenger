@@ -1,0 +1,1970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>A&T Messenger - Chat & Call Anyone</title>
+  <!-- PWA Meta Tags -->
+  <meta name="application-name" content="A&T Messenger">
+  <meta name="apple-mobile-web-app-title" content="A&T">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0f172a">
+
+  <!-- App Favicon & Apple Touch Icon -->
+  <link rel="icon" type="image/png" href="https://i.ibb.co/rR3RM9Pg/Chat-GPT-Image-Sep-18-2026-02-38-56-PM.png">
+  <link rel="apple-touch-icon" href="https://i.ibb.co/rR3RM9Pg/Chat-GPT-Image-Sep-18-2026-02-38-56-PM.png">
+
+  <!-- Embedded Web App Manifest for PWA installation -->
+  <link rel="manifest" href='data:application/manifest+json,{"name":"A%26T%20Messenger","short_name":"A%26T","description":"Universal%20Calling%20%26%20Chat%20Network","start_url":".","display":"standalone","background_color":"%23020617","theme_color":"%230f172a","icons":[{"src":"https://i.ibb.co/rR3RM9Pg/Chat-GPT-Image-Sep-18-2026-02-38-56-PM.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}'>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              400: '#818cf8',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              800: '#3730a3',
+              900: '#312e81',
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Sleek Scrollbar */
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.6);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(99, 102, 241, 0.4);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(99, 102, 241, 0.8);
+    }
+
+    /* Calling Pulse Animation */
+    @keyframes pulseRing {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.35); opacity: 0.25; }
+      100% { transform: scale(1.65); opacity: 0; }
+    }
+    .call-pulse::before, .call-pulse::after {
+      content: '';
+      position: absolute;
+      inset: -12px;
+      border-radius: 9999px;
+      background: rgba(99, 102, 241, 0.45);
+      animation: pulseRing 2.2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+      z-index: -1;
+    }
+    .call-pulse::after {
+      animation-delay: 1.1s;
+    }
+
+    /* Sound Wave Recording Animation */
+    @keyframes waveBar {
+      0%, 100% { height: 6px; }
+      50% { height: 24px; }
+    }
+    .wave-bar {
+      animation: waveBar 0.9s ease-in-out infinite;
+    }
+    .wave-bar:nth-child(2) { animation-delay: 0.15s; }
+    .wave-bar:nth-child(3) { animation-delay: 0.3s; }
+    .wave-bar:nth-child(4) { animation-delay: 0.45s; }
+    .wave-bar:nth-child(5) { animation-delay: 0.6s; }
+
+    /* Video Mirror for front camera */
+    .mirror-video {
+      transform: scaleX(-1);
+    }
+
+    /* Floating Reaction Particle Animation */
+    @keyframes floatParticle {
+      0% {
+        transform: translateY(0) scale(0.6);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-220px) scale(1.4) rotate(12deg);
+        opacity: 0;
+      }
+    }
+    .floating-particle {
+      position: absolute;
+      pointer-events: none;
+      animation: floatParticle 1.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+      z-index: 60;
+    }
+  </style>
+</head>
+
+<body class="bg-slate-950 text-slate-100 font-sans h-screen w-screen overflow-hidden flex flex-col antialiased select-none">
+
+  <!-- MAIN MOBILE CONTAINER -->
+  <div id="app" class="relative flex-1 flex flex-col max-w-md mx-auto w-full h-full bg-slate-900 border-x border-slate-800 shadow-2xl overflow-hidden">
+
+    <!-- FLOATING REACTIONS OVERLAY -->
+    <div id="heartsContainer" class="absolute inset-0 pointer-events-none overflow-hidden z-50"></div>
+
+    <!-- REGISTRATION MODAL: NAME & MOBILE NUMBER (OPEN FOR EVERYONE) -->
+    <div id="registrationModal" class="absolute inset-0 z-50 bg-slate-950/95 backdrop-blur-xl flex flex-col justify-center items-center p-6">
+      <div class="w-full max-w-sm bg-slate-900/95 border border-indigo-500/30 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
+        <div class="absolute -top-14 -right-14 w-36 h-36 bg-indigo-500/20 rounded-full blur-2xl pointer-events-none"></div>
+        <div class="absolute -bottom-14 -left-14 w-36 h-36 bg-blue-600/20 rounded-full blur-2xl pointer-events-none"></div>
+
+        <div class="text-center mb-6">
+          <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl overflow-hidden shadow-xl shadow-indigo-500/25 mb-3 border border-indigo-500/30 p-1 bg-slate-800">
+            <img src="https://i.ibb.co/rR3RM9Pg/Chat-GPT-Image-Sep-18-2026-02-38-56-PM.png" alt="A&T Logo" class="w-full h-full object-cover rounded-xl">
+          </div>
+          <h2 class="text-2xl font-black text-white tracking-tight">A&T Messenger</h2>
+          <p class="text-xs text-indigo-300 mt-1 font-medium">Universal Calling & Chat Network for Everyone</p>
+        </div>
+
+        <form id="regForm" onsubmit="event.preventDefault(); handleRegistration();" class="space-y-4 text-left">
+          <div>
+            <label class="block text-xs font-bold text-slate-300 mb-1 tracking-wide uppercase">Your Name</label>
+            <input type="text" id="regUserName" required placeholder="Enter your full name" 
+              class="w-full px-4 py-3 bg-slate-800/90 border border-slate-700 focus:border-indigo-500 rounded-xl text-white text-sm focus:outline-none transition-all placeholder:text-slate-500">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-300 mb-1 tracking-wide uppercase">Mobile Number</label>
+            <div class="flex">
+              <span class="inline-flex items-center px-3.5 bg-slate-800 border border-r-0 border-slate-700 rounded-l-xl text-slate-400 text-sm font-semibold">📱</span>
+              <input type="tel" id="regUserPhone" required placeholder="e.g. 03001234567 or +923001234567" 
+                class="w-full px-4 py-3 bg-slate-800/90 border border-slate-700 focus:border-indigo-500 rounded-r-xl text-white text-sm focus:outline-none transition-all placeholder:text-slate-500">
+            </div>
+            <p class="text-[11px] text-slate-400 mt-1.5">Anyone can search your registered number to chat or call you anytime.</p>
+          </div>
+
+          <div class="pt-2">
+            <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold rounded-xl text-sm shadow-lg shadow-indigo-600/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+              <span>Register & Enter Messenger</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- VIEW 1: CONTACTS DIRECTORY & NUMBER SEARCH SCREEN -->
+    <div id="directoryView" class="flex-1 flex flex-col overflow-hidden">
+      <!-- Directory Top Bar -->
+      <header class="h-16 px-4 bg-slate-900/95 backdrop-blur border-b border-slate-800 flex items-center justify-between shrink-0 shadow-md">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-full overflow-hidden p-[2px] bg-gradient-to-tr from-indigo-600 to-blue-600 shrink-0 shadow-md">
+            <img src="https://i.ibb.co/rR3RM9Pg/Chat-GPT-Image-Sep-18-2026-02-38-56-PM.png" alt="A&T Logo" class="w-full h-full object-cover rounded-full">
+          </div>
+          <div>
+            <h1 class="text-sm font-bold text-white flex items-center gap-1.5">
+              <span>A&T Messenger</span>
+              <span class="text-xs px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Universal</span>
+            </h1>
+            <p class="text-[11px] text-slate-400">Search any registered number to chat & call</p>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-1.5">
+          <button id="pwaInstallBtnDirectory" onclick="triggerPWAInstall()" title="Install App" class="px-2.5 py-1.5 rounded-xl bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 text-xs font-bold flex items-center gap-1 border border-indigo-500/30">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            <span>Install</span>
+          </button>
+          <button onclick="toggleProfileDetails()" title="Settings & Logout" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Current Logged-in User Profile Banner -->
+      <div class="px-4 py-2.5 bg-gradient-to-r from-indigo-950/40 via-slate-900 to-slate-900 border-b border-indigo-500/20 flex items-center justify-between text-xs">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="text-slate-400">Your Number:</span>
+          <span id="currentLoggedUserBadge" class="font-bold text-white">Alex</span>
+          <span id="currentLoggedPhoneBadge" class="font-mono text-indigo-300">(0300-1112233)</span>
+        </div>
+        <button onclick="logoutCurrentUser()" class="text-rose-400 hover:text-rose-300 font-semibold text-[11px] underline">
+          Switch Account
+        </button>
+      </div>
+
+      <!-- Main Directory Content Scrollable Area -->
+      <div class="flex-1 overflow-y-auto p-4 space-y-4">
+        
+        <!-- SEARCH NUMBER CARD (Universal Search for Anyone) -->
+        <div class="bg-slate-800/80 border border-indigo-500/40 rounded-3xl p-4 shadow-xl relative overflow-hidden">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="p-2 rounded-xl bg-indigo-500/20 text-indigo-400 text-lg">🔍</div>
+            <div>
+              <h2 class="text-sm font-bold text-white">Search Registered Mobile Number</h2>
+              <p class="text-[11px] text-slate-400">Search any contact number to check if registered on A&T</p>
+            </div>
+          </div>
+
+          <form onsubmit="event.preventDefault(); performNumberSearch();" class="mt-3 space-y-2.5">
+            <div class="relative flex">
+              <input type="tel" id="searchPhoneInput" placeholder="Enter mobile number (e.g. 03334445566)" 
+                class="w-full pl-3.5 pr-24 py-3 bg-slate-900/90 border border-slate-700 focus:border-indigo-500 rounded-2xl text-white text-xs sm:text-sm focus:outline-none placeholder:text-slate-500">
+              <button type="submit" class="absolute right-1.5 top-1.5 bottom-1.5 px-3.5 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white text-xs font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-1">
+                <span>Check</span>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              </button>
+            </div>
+            <p class="text-[10px] text-slate-400">💡 Works with or without country code/dashes (e.g., 03334445566 or +923334445566).</p>
+          </form>
+
+          <!-- DYNAMIC SEARCH RESULT BOX -->
+          <div id="searchResultArea" class="hidden mt-3 pt-3 border-t border-slate-700/80">
+            <!-- Will be populated dynamically by performNumberSearch() -->
+          </div>
+        </div>
+
+        <!-- ALL REGISTERED USERS DIRECTORY -->
+        <div>
+          <div class="flex items-center justify-between mb-2.5 px-1">
+            <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+              <span>👥</span>
+              <span>All Registered Network Members</span>
+            </h3>
+            <span id="registeredCountBadge" class="text-[10px] bg-slate-800 text-indigo-300 px-2 py-0.5 rounded-full font-semibold border border-slate-700">
+              0 Registered
+            </span>
+          </div>
+
+          <div id="registeredUsersContainer" class="space-y-2">
+            <!-- Dynamically populated cards of all registered users in the network -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- VIEW 2: 1-ON-1 ACTIVE CHAT & CALLING SCREEN -->
+    <div id="activeChatView" class="hidden flex-1 flex flex-col overflow-hidden">
+      <!-- Active Chat Header -->
+      <header class="h-16 px-3 bg-slate-900/95 backdrop-blur border-b border-slate-800 flex items-center justify-between shrink-0 z-30 shadow-md">
+        <div class="flex items-center space-x-2">
+          <!-- Back to Directory / Search Button -->
+          <button onclick="backToDirectoryView()" title="Back to Search & Contacts" class="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 active:scale-90 transition-all">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+
+          <!-- Active Partner Avatar & Name -->
+          <div class="relative">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-blue-600 p-[2px] shadow flex items-center justify-center">
+              <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center text-xs font-bold text-indigo-400" id="activePartnerMonogram">
+                T
+              </div>
+            </div>
+            <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-slate-900 rounded-full"></span>
+          </div>
+
+          <div class="leading-tight">
+            <h2 id="activePartnerHeaderName" class="text-sm font-bold text-white flex items-center gap-1">
+              <span>Tania</span>
+            </h2>
+            <p id="activePartnerHeaderPhone" class="text-[11px] text-emerald-400 font-mono">
+              0333-4445566 • Online
+            </p>
+          </div>
+        </div>
+
+        <!-- Call and Actions Menu -->
+        <div class="flex items-center space-x-1">
+          <!-- Voice Call -->
+          <button onclick="initiateCall('audio')" title="Voice Call" class="p-2 rounded-xl text-slate-300 hover:text-indigo-400 hover:bg-slate-800 active:scale-95 transition-all">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+          </button>
+
+          <!-- Video Call -->
+          <button onclick="initiateCall('video')" title="Video Call" class="p-2 rounded-xl text-slate-300 hover:text-indigo-400 hover:bg-slate-800 active:scale-95 transition-all">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+          </button>
+
+          <!-- More Options / Profile -->
+          <button onclick="toggleProfileDetails()" title="Chat Settings & Members" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- CHAT MESSAGES AREA (FILTERED 1-ON-1) -->
+      <main id="chatMessages" class="flex-1 overflow-y-auto px-4 py-4 space-y-3.5 bg-gradient-to-b from-slate-900 via-slate-900/95 to-slate-950">
+        <!-- Rendered dynamically -->
+      </main>
+
+      <!-- UNIVERSAL EMOJIS & STICKERS DRAWER -->
+      <div id="coupleEmojiDrawer" class="hidden bg-slate-900 border-t border-slate-800 px-3 py-2.5 transition-all duration-200">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold text-indigo-400 flex items-center gap-1.5">
+            <span>✨</span> Emojis & Quick Reactions
+          </span>
+          <button onclick="toggleCoupleEmojiDrawer()" class="text-slate-400 hover:text-white text-xs px-2 py-0.5 rounded-lg bg-slate-800">
+            Close ✕
+          </button>
+        </div>
+
+        <div class="grid grid-cols-8 gap-2 text-xl sm:text-2xl text-center py-1">
+          <button onclick="insertEmoji('👋')" class="hover:scale-125 transition-transform p-1">👋</button>
+          <button onclick="insertEmoji('👍')" class="hover:scale-125 transition-transform p-1">👍</button>
+          <button onclick="insertEmoji('😊')" class="hover:scale-125 transition-transform p-1">😊</button>
+          <button onclick="insertEmoji('❤️')" class="hover:scale-125 transition-transform p-1">❤️</button>
+          <button onclick="insertEmoji('😂')" class="hover:scale-125 transition-transform p-1">😂</button>
+          <button onclick="insertEmoji('🔥')" class="hover:scale-125 transition-transform p-1">🔥</button>
+          <button onclick="insertEmoji('🎉')" class="hover:scale-125 transition-transform p-1">🎉</button>
+          <button onclick="insertEmoji('👏')" class="hover:scale-125 transition-transform p-1">👏</button>
+          <button onclick="insertEmoji('🤝')" class="hover:scale-125 transition-transform p-1">🤝</button>
+          <button onclick="insertEmoji('🙏')" class="hover:scale-125 transition-transform p-1">🙏</button>
+          <button onclick="insertEmoji('💯')" class="hover:scale-125 transition-transform p-1">💯</button>
+          <button onclick="insertEmoji('🚀')" class="hover:scale-125 transition-transform p-1">🚀</button>
+          <button onclick="insertEmoji('⭐')" class="hover:scale-125 transition-transform p-1">⭐</button>
+          <button onclick="insertEmoji('😎')" class="hover:scale-125 transition-transform p-1">😎</button>
+          <button onclick="insertEmoji('☕')" class="hover:scale-125 transition-transform p-1">☕</button>
+          <button onclick="insertEmoji('💬')" class="hover:scale-125 transition-transform p-1">💬</button>
+        </div>
+      </div>
+
+      <!-- BOTTOM INPUT BAR -->
+      <footer class="p-3 bg-slate-900 border-t border-slate-800/90 relative z-20">
+        <!-- Active Voice Recording Bar -->
+        <div id="recordingControls" class="hidden flex items-center justify-between bg-slate-800/95 border border-indigo-500/40 rounded-2xl px-3.5 py-2.5 mb-1.5 shadow-lg">
+          <div class="flex items-center space-x-2.5">
+            <div class="w-3 h-3 rounded-full bg-rose-500 animate-ping"></div>
+            <span id="recordingTimer" class="font-mono text-xs font-bold text-rose-400">00:00</span>
+            
+            <div class="flex items-center gap-1 h-5 ml-2">
+              <div class="w-1 bg-indigo-500 rounded-full wave-bar"></div>
+              <div class="w-1 bg-indigo-400 rounded-full wave-bar"></div>
+              <div class="w-1 bg-blue-400 rounded-full wave-bar"></div>
+              <div class="w-1 bg-indigo-300 rounded-full wave-bar"></div>
+              <div class="w-1 bg-indigo-500 rounded-full wave-bar"></div>
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-2">
+            <button onclick="cancelVoiceRecording()" class="px-2.5 py-1 text-xs text-slate-400 hover:text-rose-400 hover:bg-slate-700/50 rounded-lg">
+              Cancel
+            </button>
+            <button onclick="stopAndSendVoiceRecording()" class="p-2 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-full shadow hover:opacity-90 active:scale-95">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Main Input Bar Controls -->
+        <div class="flex items-center space-x-1.5">
+          <!-- Universal Emoji Drawer Toggle -->
+          <button onclick="toggleCoupleEmojiDrawer()" title="Emojis & Reactions" class="p-2.5 text-indigo-400 hover:bg-slate-800 rounded-xl transition-all active:scale-125">
+            😊
+          </button>
+
+          <!-- Quick Wave / Reaction Blast -->
+          <button onclick="sendQuickHeart()" title="Send Quick Greeting" class="p-2.5 text-blue-400 hover:bg-slate-800 rounded-xl transition-all active:scale-125">
+            👋
+          </button>
+
+          <!-- Mobile Image Compressor Attachment -->
+          <label title="Compress & Send Photo" class="p-2.5 text-slate-400 hover:text-indigo-300 hover:bg-slate-800 rounded-xl cursor-pointer transition-all">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            <input type="file" id="imageInput" accept="image/*" class="hidden" onchange="openMobileCompressor(event)">
+          </label>
+
+          <!-- Text Input Field -->
+          <div class="flex-1 relative">
+            <input type="text" id="messageInput" placeholder="Type a message..." 
+              onkeydown="if(event.key === 'Enter') handleSendTextMessage();"
+              class="w-full bg-slate-800/80 border border-slate-700/80 focus:border-indigo-500 rounded-2xl px-4 py-2.5 text-white text-sm focus:outline-none placeholder:text-slate-500 transition-colors">
+          </div>
+
+          <!-- Voice Note Record Button -->
+          <div id="actionButtonWrapper">
+            <button id="recordBtn" onclick="toggleVoiceRecording()" title="Record Voice Note" 
+              class="p-2.5 rounded-2xl bg-gradient-to-tr from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white shadow-md shadow-indigo-600/30 active:scale-95 transition-all flex items-center justify-center">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+            </button>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <!-- MOBILE IMAGE COMPRESSOR MODAL -->
+    <div id="compressorModal" class="hidden absolute inset-0 z-40 bg-slate-950/90 backdrop-blur-md flex flex-col justify-end p-4">
+      <div class="bg-slate-900 border border-slate-700 rounded-3xl p-5 shadow-2xl space-y-4">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+          <div class="flex items-center gap-2">
+            <span class="p-2 rounded-xl bg-pink-500/20 text-pink-400 text-base">🗜️</span>
+            <div>
+              <h3 class="font-bold text-white text-sm">Mobile Image Compressor</h3>
+              <p class="text-[10px] text-slate-400">Save mobile data & send photos instantly</p>
+            </div>
+          </div>
+          <button onclick="closeCompressorModal()" class="text-slate-400 hover:text-white p-1">✕</button>
+        </div>
+
+        <div class="flex gap-4 items-center bg-slate-800/60 p-3 rounded-2xl">
+          <div class="w-20 h-20 rounded-xl bg-slate-900 overflow-hidden shrink-0 border border-slate-700 flex items-center justify-center">
+            <img id="compressorPreviewImg" src="" class="w-full h-full object-cover" alt="Preview">
+          </div>
+          <div class="flex-1 space-y-1.5 text-xs">
+            <div class="flex justify-between">
+              <span class="text-slate-400">Original Size:</span>
+              <span id="originalSizeText" class="font-mono text-slate-200">0 KB</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-pink-300 font-medium">Compressed:</span>
+              <span id="compressedSizeText" class="font-mono font-bold text-emerald-400">0 KB</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">Data Saved:</span>
+              <span id="savingsPercentageBadge" class="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded text-[10px] font-bold">0%</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-2">Compression Quality Preset:</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button type="button" onclick="setCompressionPreset(0.35)" id="presetLow" class="py-2 px-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-medium border border-slate-700">
+              ⚡ Ultra Light (35%)
+            </button>
+            <button type="button" onclick="setCompressionPreset(0.65)" id="presetMed" class="py-2 px-2 bg-indigo-600/30 text-indigo-300 rounded-xl text-xs font-semibold border border-indigo-500">
+              ⭐ Balanced (65%)
+            </button>
+            <button type="button" onclick="setCompressionPreset(0.85)" id="presetHigh" class="py-2 px-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-medium border border-slate-700">
+              ✨ HD Sharp (85%)
+            </button>
+          </div>
+        </div>
+
+        <div class="pt-2 flex gap-2">
+          <button onclick="closeCompressorModal()" class="w-1/3 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold">
+            Cancel
+          </button>
+          <button onclick="sendCompressedImageToChat()" class="flex-1 py-3 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2">
+            <span>Send Compressed Photo</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- INCOMING CALL SCREEN -->
+    <div id="incomingCallModal" class="hidden absolute inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex flex-col justify-between items-center py-16 px-6 text-center">
+      <div class="flex flex-col items-center">
+        <div class="relative w-28 h-28 mb-4 call-pulse flex items-center justify-center">
+          <div class="w-24 h-24 rounded-full bg-gradient-to-tr from-pink-600 to-rose-500 p-1 shadow-2xl flex items-center justify-center">
+            <div class="w-full h-full rounded-full bg-slate-800 flex items-center justify-center text-3xl font-black text-pink-400">
+              A&T
+            </div>
+          </div>
+        </div>
+        <h3 id="incomingCallerName" class="text-2xl font-black text-white tracking-wide">Partner</h3>
+        <p id="incomingCallType" class="text-pink-400 text-sm font-semibold mt-1">Incoming Video Call...</p>
+        <span class="inline-block mt-3 px-3 py-1 bg-slate-800/80 rounded-full text-xs text-slate-400 font-mono" id="incomingCallerPhone">Registered Number</span>
+      </div>
+
+      <div class="w-full flex items-center justify-around max-w-xs">
+        <button onclick="rejectIncomingCall()" class="flex flex-col items-center group">
+          <div class="w-16 h-16 rounded-full bg-rose-600/20 group-hover:bg-rose-600 text-rose-500 group-hover:text-white flex items-center justify-center transition-all border border-rose-500/40 shadow-lg active:scale-95">
+            <svg class="w-7 h-7 rotate-[135deg]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+          </div>
+          <span class="text-xs text-slate-400 mt-2 font-medium">Decline</span>
+        </button>
+
+        <button onclick="acceptIncomingCall()" class="flex flex-col items-center group">
+          <div class="w-16 h-16 rounded-full bg-emerald-600 text-white flex items-center justify-center transition-all border border-emerald-400/50 shadow-xl shadow-emerald-600/40 active:scale-95 animate-bounce">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+          </div>
+          <span class="text-xs text-emerald-400 mt-2 font-medium">Answer</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ACTIVE CALL SCREEN -->
+    <div id="activeCallScreen" class="hidden absolute inset-0 z-50 bg-slate-950 flex flex-col justify-between overflow-hidden">
+      <div class="absolute top-0 inset-x-0 p-4 z-20 flex items-center justify-between bg-gradient-to-b from-slate-950/80 to-transparent">
+        <div class="flex items-center space-x-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-pulse"></span>
+          <span id="callTypeBadge" class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-800/80 text-indigo-300 border border-slate-700">A&T Call</span>
+        </div>
+        <div id="activeCallDuration" class="font-mono text-sm font-bold text-white bg-slate-900/80 px-3 py-1 rounded-full border border-slate-700">
+          00:00
+        </div>
+        <div class="text-xs text-slate-400 font-medium flex items-center gap-1">
+          <span>🔒</span> End-to-End Encrypted
+        </div>
+      </div>
+
+      <div class="relative w-full h-full flex items-center justify-center bg-slate-900 overflow-hidden">
+        <video id="partnerVideo" autoplay playsinline class="w-full h-full object-cover"></video>
+
+        <div id="audioCallAvatarView" class="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-slate-900 to-slate-950">
+          <div class="relative mb-6">
+            <div class="w-32 h-32 rounded-full bg-gradient-to-tr from-indigo-600 to-blue-600 p-1 shadow-2xl call-pulse flex items-center justify-center">
+              <div class="w-full h-full rounded-full bg-slate-800 flex items-center justify-center text-3xl font-black text-indigo-400">
+                A&T
+              </div>
+            </div>
+          </div>
+          <h2 id="activeCallPartnerName" class="text-xl font-bold text-white">A&T Connected</h2>
+          <p class="text-xs text-indigo-400 mt-1">HD Audio Call Connected</p>
+
+          <div class="flex items-center gap-1.5 mt-8 h-8">
+            <div class="w-1.5 bg-indigo-500 rounded-full wave-bar"></div>
+            <div class="w-1.5 bg-blue-400 rounded-full wave-bar"></div>
+            <div class="w-1.5 bg-indigo-400 rounded-full wave-bar"></div>
+            <div class="w-1.5 bg-indigo-300 rounded-full wave-bar"></div>
+            <div class="w-1.5 bg-blue-500 rounded-full wave-bar"></div>
+            <div class="w-1.5 bg-indigo-500 rounded-full wave-bar"></div>
+          </div>
+        </div>
+
+        <div id="selfCameraContainer" class="absolute top-16 right-4 w-28 h-40 bg-slate-800 rounded-2xl overflow-hidden border-2 border-indigo-500/60 shadow-2xl z-20 cursor-pointer">
+          <video id="selfVideo" autoplay playsinline muted class="w-full h-full object-cover mirror-video"></video>
+          <div class="absolute bottom-1 right-1 text-[9px] bg-black/60 px-1.5 py-0.5 rounded text-white">You</div>
+        </div>
+      </div>
+
+      <div class="absolute bottom-0 inset-x-0 p-6 z-20 flex items-center justify-center space-x-4 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent">
+        <button id="toggleMicBtn" onclick="toggleMic()" title="Mute/Unmute Mic" class="w-12 h-12 p-3 rounded-full bg-slate-800/90 text-white hover:bg-slate-700 border border-slate-700 active:scale-95 transition-all shadow-lg flex items-center justify-center">
+          <svg id="micIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+        </button>
+
+        <button id="toggleCamBtn" onclick="toggleCamera()" title="Turn Camera On/Off" class="w-12 h-12 p-3 rounded-full bg-slate-800/90 text-white hover:bg-slate-700 border border-slate-700 active:scale-95 transition-all shadow-lg flex items-center justify-center">
+          <svg id="camIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+        </button>
+
+        <button onclick="switchCameraFacing()" title="Switch Front/Back Camera" class="w-12 h-12 p-3 rounded-full bg-slate-800/90 text-white hover:bg-slate-700 border border-slate-700 active:scale-95 transition-all shadow-lg flex items-center justify-center">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        </button>
+
+        <button onclick="endActiveCall()" title="End Call" class="w-14 h-14 rounded-full bg-rose-600 hover:bg-rose-500 text-white flex items-center justify-center shadow-xl shadow-rose-600/50 active:scale-95 transition-all">
+          <svg class="w-7 h-7 rotate-[135deg]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- PROFILE & APP SETTINGS DRAWER -->
+    <div id="profileModal" class="hidden absolute inset-0 z-40 bg-slate-950/90 backdrop-blur-md flex flex-col justify-end p-4">
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+          <div class="flex items-center gap-2">
+            <span class="text-pink-400 font-black text-lg">A&T</span>
+            <h3 class="font-bold text-white text-base">Network Settings</h3>
+          </div>
+          <button onclick="toggleProfileDetails()" class="p-1 rounded-full text-slate-400 hover:text-white">✕</button>
+        </div>
+
+        <div class="p-3 bg-pink-950/30 border border-pink-500/30 rounded-2xl flex items-center justify-between">
+          <div>
+            <span class="text-[10px] uppercase font-bold text-pink-400 tracking-wider">Your Active Profile</span>
+            <p id="currentUserDisplay" class="font-bold text-white text-sm">Alex</p>
+            <p id="currentUserPhoneDisplay" class="text-xs font-mono text-pink-300">03001112233</p>
+          </div>
+          <span class="text-[11px] bg-emerald-500/20 text-emerald-400 px-2.5 py-1 rounded-lg font-semibold">Registered</span>
+        </div>
+
+        <div class="pt-1">
+          <p class="text-xs font-semibold text-slate-400 mb-1.5">Test Simulator Call:</p>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="triggerSimulatedIncomingCall('video')" class="py-2.5 px-3 bg-pink-600/20 hover:bg-pink-600/30 text-pink-300 border border-pink-500/30 rounded-xl text-xs font-medium">
+              📹 Test Video Call
+            </button>
+            <button onclick="triggerSimulatedIncomingCall('audio')" class="py-2.5 px-3 bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/30 rounded-xl text-xs font-medium">
+              📞 Test Audio Call
+            </button>
+          </div>
+        </div>
+
+        <div class="pt-2 border-t border-slate-800/80 space-y-2">
+          <button onclick="promptClearAllChats()" class="w-full py-2.5 bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/40 text-rose-300 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            <span>Delete Chat History</span>
+          </button>
+
+          <button onclick="logoutCurrentUser()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+            <span>Log Out (Change Registered Number)</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PWA INSTALL GUIDE MODAL -->
+    <div id="installGuideModal" class="hidden absolute inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex flex-col justify-center items-center p-6">
+      <div class="w-full max-w-sm bg-slate-900 border border-indigo-500/40 rounded-3xl p-6 shadow-2xl text-center space-y-4">
+        <div class="w-20 h-20 rounded-2xl overflow-hidden mx-auto shadow-xl shadow-indigo-600/30 border border-indigo-500/40 p-1 bg-slate-800">
+          <img src="https://i.ibb.co/rR3RM9Pg/Chat-GPT-Image-Sep-18-2026-02-38-56-PM.png" alt="A&T Messenger App Icon" class="w-full h-full object-cover rounded-xl">
+        </div>
+        <h3 class="text-lg font-bold text-white">Install A&T Messenger</h3>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Install A&T directly to your phone for faster access, instant calls, and fullscreen chatting:
+        </p>
+        <div class="bg-slate-800/70 p-3 rounded-2xl text-xs text-left space-y-2 border border-slate-700">
+          <p class="text-slate-300"><span class="font-bold text-pink-400">Android Chrome:</span> Tap browser menu (⋮) and tap <b>"Add to Home screen"</b> or <b>"Install App"</b>.</p>
+          <p class="text-slate-300"><span class="font-bold text-pink-400">iPhone Safari:</span> Tap Share icon (⎋) and tap <b>"Add to Home Screen"</b>.</p>
+        </div>
+        <button onclick="closeInstallModal()" class="w-full py-3 bg-pink-600 hover:bg-pink-500 text-white font-bold rounded-xl text-xs transition-all">
+          Got It!
+        </button>
+      </div>
+    </div>
+
+    <!-- CONFIRM DELETE MODAL -->
+    <div id="confirmDeleteModal" class="hidden absolute inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex flex-col justify-center items-center p-6">
+      <div class="w-full max-w-xs bg-slate-900 border border-rose-600/40 rounded-3xl p-6 shadow-2xl text-center space-y-3">
+        <div class="w-12 h-12 rounded-2xl bg-rose-600/20 text-rose-400 flex items-center justify-center text-xl mx-auto">
+          🗑️
+        </div>
+        <h3 class="text-base font-bold text-white">Delete Chat History?</h3>
+        <p class="text-xs text-slate-400">
+          All messages, voice notes, and compressed photos in this conversation will be permanently removed.
+        </p>
+        <div class="flex gap-2 pt-2">
+          <button onclick="closeConfirmDeleteModal()" class="w-1/2 py-2.5 bg-slate-800 text-slate-300 rounded-xl text-xs font-semibold">
+            Cancel
+          </button>
+          <button onclick="confirmClearAllChats()" class="w-1/2 py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-rose-600/30">
+            Yes, Delete
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toast" class="absolute top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 transition-opacity duration-300">
+      <div id="toastMessage" class="bg-slate-800/95 border border-indigo-500/40 text-white text-xs py-2 px-4 rounded-xl shadow-xl backdrop-blur flex items-center gap-2">
+        <span>✨</span>
+        <span id="toastText">Action Completed</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- APPLICATION ENGINE: FIREBASE STORAGE & SEARCH SYSTEM -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { 
+      getAuth, 
+      signInAnonymously, 
+      signInWithCustomToken, 
+      signOut 
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { 
+      getFirestore, 
+      doc, 
+      setDoc, 
+      getDoc, 
+      addDoc, 
+      deleteDoc, 
+      collection, 
+      onSnapshot, 
+      getDocs 
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'at-couple-chat';
+    let db = null;
+    let auth = null;
+    let currentUser = null;
+    let unsubscribeMessages = null;
+    let unsubscribeUsers = null;
+    let deferredPrompt = null;
+
+    let audioCtx = null;
+    let ringtoneInterval = null;
+
+    const AppState = {
+      me: null, // { name, phone, normalizedPhone }
+      activePartner: null, // { name, phone, normalizedPhone }
+      registeredUsers: [], // [{ id, name, phone, normalizedPhone, registeredAt }]
+      messages: [],
+      activeCall: {
+        type: null,
+        status: 'idle',
+        timerInterval: null,
+        durationSeconds: 0,
+        localStream: null,
+        isMuted: false,
+        isCameraOff: false,
+        facingMode: 'user'
+      },
+      voiceRecording: {
+        mediaRecorder: null,
+        audioChunks: [],
+        timerInterval: null,
+        seconds: 0,
+        isRecording: false
+      },
+      compressor: {
+        currentRawFile: null,
+        rawImageBitmap: null,
+        quality: 0.65,
+        originalSizeBytes: 0,
+        compressedBlob: null,
+        compressedDataUrl: null
+      }
+    };
+
+    function normalizePhone(str) {
+      if (!str) return '';
+      let cleaned = str.replace(/\D/g, '');
+      if (cleaned.startsWith('92') && cleaned.length >= 11) {
+        cleaned = '0' + cleaned.slice(2);
+      }
+      return cleaned;
+    }
+
+    function isPhoneMatch(p1, p2) {
+      const n1 = normalizePhone(p1);
+      const n2 = normalizePhone(p2);
+      if (!n1 || !n2) return false;
+      return n1 === n2 || n1.endsWith(n2) || n2.endsWith(n1);
+    }
+
+    function getRoomId(phoneA, phoneB) {
+      const a = normalizePhone(phoneA);
+      const b = normalizePhone(phoneB);
+      return [a, b].sort().join('__');
+    }
+
+    async function initCloudStorage() {
+      try {
+        if (typeof __firebase_config !== 'undefined') {
+          const firebaseConfig = JSON.parse(__firebase_config);
+          const app = initializeApp(firebaseConfig);
+          auth = getAuth(app);
+          db = getFirestore(app);
+
+          if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+            await signInWithCustomToken(auth, __initial_auth_token);
+          } else {
+            await signInAnonymously(auth);
+          }
+
+          currentUser = auth.currentUser;
+          if (currentUser) {
+            setupRealtimeSync();
+          }
+        } else {
+          loadFallbackData();
+        }
+      } catch (err) {
+        console.warn("Cloud fallback to memory:", err);
+        loadFallbackData();
+      }
+    }
+
+    function setupRealtimeSync() {
+      if (!db || !currentUser) return;
+
+      // Realtime listener for registered numbers
+      const usersCol = collection(db, 'artifacts', appId, 'public', 'data', 'at_users');
+      unsubscribeUsers = onSnapshot(usersCol, (snapshot) => {
+        const list = [];
+        snapshot.forEach(docSnap => {
+          list.push({ id: docSnap.id, ...docSnap.data() });
+        });
+        AppState.registeredUsers = list;
+        renderDirectoryUsers();
+      }, (err) => {
+        console.warn("User sync error:", err);
+      });
+
+      // Realtime listener for all chat messages
+      const messagesCol = collection(db, 'artifacts', appId, 'public', 'data', 'at_messages');
+      unsubscribeMessages = onSnapshot(messagesCol, (snapshot) => {
+        const loadedList = [];
+        snapshot.forEach(docSnap => {
+          loadedList.push({ id: docSnap.id, ...docSnap.data() });
+        });
+
+        loadedList.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+        AppState.messages = loadedList;
+
+        if (AppState.activePartner) {
+          renderMessages();
+        }
+      }, (error) => {
+        console.error("Firestore message sync error:", error);
+      });
+    }
+
+    function loadFallbackData() {
+      AppState.registeredUsers = [];
+      renderDirectoryUsers();
+    }
+
+    async function handleRegistration() {
+      const name = document.getElementById('regUserName').value.trim();
+      const phone = document.getElementById('regUserPhone').value.trim();
+
+      if (!name || !phone) {
+        showToast("Please enter both Name and Mobile Number");
+        return;
+      }
+
+      const normalized = normalizePhone(phone);
+      AppState.me = { name, phone, normalizedPhone: normalized };
+
+      document.getElementById('registrationModal').classList.add('hidden');
+      updateUserInterface();
+      showToast(`Welcome ${name}! Number registered 🎉`);
+
+      // Save user to cloud database so other searchers will find them
+      if (db && currentUser) {
+        try {
+          const sanitizedDocId = normalized || phone.replace(/[^a-zA-Z0-9]/g, '_');
+          const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'at_users', sanitizedDocId);
+          await setDoc(userDocRef, {
+            name: name,
+            phone: phone,
+            normalizedPhone: normalized,
+            registeredAt: Date.now()
+          });
+        } catch (e) {
+          console.warn("Could not save registered number to cloud:", e);
+        }
+      } else {
+        const idx = AppState.registeredUsers.findIndex(u => isPhoneMatch(u.phone, phone));
+        if (idx >= 0) {
+          AppState.registeredUsers[idx].name = name;
+        } else {
+          AppState.registeredUsers.push({
+            name,
+            phone,
+            normalizedPhone: normalized,
+            registeredAt: Date.now()
+          });
+        }
+        renderDirectoryUsers();
+      }
+    }
+
+    function quickFillUser(name, phone) {
+      document.getElementById('regUserName').value = name;
+      document.getElementById('regUserPhone').value = phone;
+    }
+
+    function updateUserInterface() {
+      if (!AppState.me) return;
+      document.getElementById('currentLoggedUserBadge').textContent = AppState.me.name;
+      document.getElementById('currentLoggedPhoneBadge').textContent = `(${AppState.me.phone})`;
+      document.getElementById('currentUserDisplay').textContent = AppState.me.name;
+      document.getElementById('currentUserPhoneDisplay').textContent = AppState.me.phone;
+    }
+
+    function performNumberSearch() {
+      const searchInput = document.getElementById('searchPhoneInput');
+      const query = searchInput.value.trim();
+
+      if (!query) {
+        showToast("Please enter a mobile number to search");
+        return;
+      }
+
+      const resultArea = document.getElementById('searchResultArea');
+      resultArea.classList.remove('hidden');
+
+      // Check if searching self
+      if (AppState.me && isPhoneMatch(AppState.me.phone, query)) {
+        resultArea.innerHTML = `
+          <div class="p-3 bg-indigo-950/40 border border-indigo-500/40 rounded-2xl flex items-center gap-3">
+            <span class="text-2xl">👤</span>
+            <div>
+              <p class="text-xs font-bold text-white">This is your own registered number!</p>
+              <p class="text-[11px] text-indigo-300">Registered as <b>${escapeHtml(AppState.me.name)}</b> (${escapeHtml(AppState.me.phone)})</p>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      // Search registered members
+      const matchedUser = AppState.registeredUsers.find(u => isPhoneMatch(u.phone, query));
+
+      if (matchedUser) {
+        resultArea.innerHTML = `
+          <div class="p-3.5 bg-emerald-950/40 border border-emerald-500/50 rounded-2xl space-y-2.5">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="text-lg">✅</span>
+                <div>
+                  <div class="flex items-center gap-1.5">
+                    <h4 class="text-xs font-black text-emerald-300 uppercase tracking-wider">Number is Registered!</h4>
+                    <span class="text-[9px] bg-emerald-500/20 text-emerald-300 font-bold px-1.5 py-0.5 rounded">Active</span>
+                  </div>
+                  <p class="text-xs font-bold text-white mt-0.5">${escapeHtml(matchedUser.name)}</p>
+                  <p class="text-[11px] font-mono text-emerald-400">${escapeHtml(matchedUser.phone)}</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-emerald-900/20 p-2 rounded-xl border border-emerald-500/20 text-[11px] text-emerald-200">
+              💬 <b>Ready to connect:</b> This number is registered on A&T. You can chat, send voice notes, and make calls right now!
+            </div>
+
+            <div class="flex items-center gap-2 pt-1">
+              <button onclick="startChatWithUser('${escapeHtml(matchedUser.name)}', '${escapeHtml(matchedUser.phone)}')" 
+                class="flex-1 py-2.5 px-3 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-600/30 flex items-center justify-center gap-1.5 active:scale-95 transition-all">
+                <span>💬 Start Chatting Now</span>
+              </button>
+              <button onclick="quickCallFromSearch('${escapeHtml(matchedUser.name)}', '${escapeHtml(matchedUser.phone)}', 'audio')" title="Voice Call" 
+                class="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl border border-slate-700 active:scale-95">
+                📞
+              </button>
+              <button onclick="quickCallFromSearch('${escapeHtml(matchedUser.name)}', '${escapeHtml(matchedUser.phone)}', 'video')" title="Video Call" 
+                class="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl border border-slate-700 active:scale-95">
+                📹
+              </button>
+            </div>
+          </div>
+        `;
+        showToast("Registered number found! ✅");
+      } else {
+        resultArea.innerHTML = `
+          <div class="p-3.5 bg-rose-950/40 border border-rose-500/40 rounded-2xl space-y-2">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">❌</span>
+              <div>
+                <h4 class="text-xs font-black text-rose-300 uppercase tracking-wider">Number Not Registered</h4>
+                <p class="text-xs font-mono text-slate-300">${escapeHtml(query)}</p>
+              </div>
+            </div>
+            <p class="text-[11px] text-slate-300">
+              This mobile number has not registered on A&T yet. Ask them to open A&T and enter their Name and Number to register!
+            </p>
+          </div>
+        `;
+        showToast("Number not registered yet");
+      }
+    }
+
+    function renderDirectoryUsers() {
+      const container = document.getElementById('registeredUsersContainer');
+      const countBadge = document.getElementById('registeredCountBadge');
+
+      if (!container) return;
+      container.innerHTML = '';
+
+      const users = AppState.registeredUsers.length > 0 ? AppState.registeredUsers : [];
+      countBadge.textContent = `${users.length} Registered`;
+
+      if (users.length === 0) {
+        container.innerHTML = `
+          <div class="p-6 text-center bg-slate-800/40 rounded-2xl border border-slate-800">
+            <p class="text-xs text-slate-400">No other registered users found yet.</p>
+            <p class="text-[11px] text-indigo-400 mt-1">Use the quick presets or invite friends to register their number!</p>
+          </div>
+        `;
+        return;
+      }
+
+      users.forEach(u => {
+        const isCurrent = AppState.me && isPhoneMatch(AppState.me.phone, u.phone);
+
+        const card = document.createElement('div');
+        card.className = "p-3 bg-slate-800/80 hover:bg-slate-800 border border-slate-700/70 rounded-2xl flex items-center justify-between shadow-sm transition-all";
+        card.innerHTML = `
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-600 to-blue-600 p-[2px] flex items-center justify-center shrink-0">
+              <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center text-xs font-bold text-indigo-400">
+                ${escapeHtml(u.name.charAt(0) || 'U')}
+              </div>
+            </div>
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="font-bold text-white text-xs">${escapeHtml(u.name)}</span>
+                ${isCurrent ? '<span class="text-[9px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.2 rounded font-bold">You</span>' : '<span class="text-[9px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.2 rounded font-semibold">Registered</span>'}
+              </div>
+              <p class="text-xs font-mono text-slate-400">${escapeHtml(u.phone)}</p>
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-1.5">
+            ${isCurrent ? `
+              <span class="text-[10px] text-slate-500 italic pr-2">Your Device</span>
+            ` : `
+              <button onclick="startChatWithUser('${escapeHtml(u.name)}', '${escapeHtml(u.phone)}')" class="py-1.5 px-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-600/30 flex items-center gap-1 active:scale-95 transition-all">
+                <span>Chat</span>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+              </button>
+            `}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function startChatWithUser(name, phone) {
+      if (!AppState.me) {
+        document.getElementById('registrationModal').classList.remove('hidden');
+        return;
+      }
+
+      AppState.activePartner = {
+        name,
+        phone,
+        normalizedPhone: normalizePhone(phone)
+      };
+
+      document.getElementById('activePartnerMonogram').textContent = name.charAt(0) || 'P';
+      document.getElementById('activePartnerHeaderName').innerHTML = `<span>${escapeHtml(name)}</span>`;
+      document.getElementById('activePartnerHeaderPhone').textContent = `${phone} • Registered Contact`;
+
+      // Switch views
+      document.getElementById('directoryView').classList.add('hidden');
+      document.getElementById('activeChatView').classList.remove('hidden');
+
+      renderMessages();
+      showToast(`Chat opened with ${name}`);
+    }
+
+    function backToDirectoryView() {
+      AppState.activePartner = null;
+      document.getElementById('activeChatView').classList.add('hidden');
+      document.getElementById('directoryView').classList.remove('hidden');
+      renderDirectoryUsers();
+    }
+
+    function quickCallFromSearch(name, phone, callType) {
+      startChatWithUser(name, phone);
+      setTimeout(() => {
+        initiateCall(callType);
+      }, 300);
+    }
+
+    async function persistMessage(msgObj) {
+      if (!AppState.me || !AppState.activePartner) return;
+
+      const roomId = getRoomId(AppState.me.phone, AppState.activePartner.phone);
+
+      const fullMsg = {
+        ...msgObj,
+        roomId: roomId,
+        senderName: AppState.me.name,
+        senderPhone: AppState.me.phone,
+        recipientName: AppState.activePartner.name,
+        recipientPhone: AppState.activePartner.phone,
+        createdAt: Date.now()
+      };
+
+      if (!db || !currentUser) {
+        AppState.messages.push(fullMsg);
+        renderMessages();
+        return;
+      }
+
+      try {
+        const messagesCol = collection(db, 'artifacts', appId, 'public', 'data', 'at_messages');
+        await addDoc(messagesCol, fullMsg);
+      } catch (err) {
+        console.error("Error saving message:", err);
+        AppState.messages.push(fullMsg);
+        renderMessages();
+      }
+    }
+
+    function handleSendTextMessage() {
+      const input = document.getElementById('messageInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      persistMessage({
+        id: 'msg-' + Date.now(),
+        text: text,
+        timestamp: getCurrentTimeFormatted(),
+        type: 'text'
+      });
+
+      input.value = '';
+      playChime('msg');
+    }
+
+    async function deleteSingleMessage(msgId) {
+      if (!db || !currentUser) {
+        AppState.messages = AppState.messages.filter(m => m.id !== msgId);
+        renderMessages();
+        showToast("Message deleted 🗑️");
+        return;
+      }
+
+      try {
+        const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'at_messages', msgId);
+        await deleteDoc(docRef);
+        showToast("Message deleted 🗑️");
+      } catch (err) {
+        console.error("Error deleting message:", err);
+        showToast("Could not delete message");
+      }
+    }
+
+    function promptClearAllChats() {
+      document.getElementById('profileModal').classList.add('hidden');
+      document.getElementById('confirmDeleteModal').classList.remove('hidden');
+    }
+
+    function closeConfirmDeleteModal() {
+      document.getElementById('confirmDeleteModal').classList.add('hidden');
+    }
+
+    async function confirmClearAllChats() {
+      closeConfirmDeleteModal();
+
+      if (!AppState.me || !AppState.activePartner) {
+        showToast("No active conversation selected");
+        return;
+      }
+
+      const activeRoomId = getRoomId(AppState.me.phone, AppState.activePartner.phone);
+
+      if (!db || !currentUser) {
+        AppState.messages = AppState.messages.filter(m => m.roomId !== activeRoomId);
+        renderMessages();
+        showToast("Conversation cleared 🗑️");
+        return;
+      }
+
+      try {
+        const messagesCol = collection(db, 'artifacts', appId, 'public', 'data', 'at_messages');
+        const snapshot = await getDocs(messagesCol);
+        const deletionTasks = [];
+        snapshot.forEach((d) => {
+          const data = d.data();
+          if (data.roomId === activeRoomId) {
+            deletionTasks.push(deleteDoc(d.ref));
+          }
+        });
+        await Promise.all(deletionTasks);
+
+        AppState.messages = AppState.messages.filter(m => m.roomId !== activeRoomId);
+        renderMessages();
+        showToast("Chat history deleted 🗑️");
+      } catch (err) {
+        console.error("Error clearing chat history:", err);
+        showToast("Failed to clear chat history");
+      }
+    }
+
+    function renderMessages() {
+      const container = document.getElementById('chatMessages');
+      if (!container) return;
+
+      if (!AppState.activePartner) return;
+
+      const activeRoomId = getRoomId(AppState.me.phone, AppState.activePartner.phone);
+      const filtered = AppState.messages.filter(m => m.roomId === activeRoomId);
+
+      container.innerHTML = `
+        <div class="flex justify-center">
+          <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl px-4 py-2 text-center max-w-xs shadow-sm">
+            <div class="text-[11px] text-indigo-300 font-semibold flex items-center justify-center gap-1.5">
+              <span>🔒</span>
+              <span>End-to-End Direct Chat</span>
+            </div>
+            <p class="text-[10px] text-slate-400 mt-0.5">Chatting with <b>${escapeHtml(AppState.activePartner.name)}</b> (${escapeHtml(AppState.activePartner.phone)}).</p>
+          </div>
+        </div>
+      `;
+
+      if (filtered.length === 0) {
+        const welcomeDiv = document.createElement('div');
+        welcomeDiv.className = "text-center py-8 text-xs text-slate-400";
+        welcomeDiv.innerHTML = `
+          <div class="text-3xl mb-2">👋💬</div>
+          <p>No messages yet with <b>${escapeHtml(AppState.activePartner.name)}</b>.</p>
+          <p class="text-[11px] text-indigo-400 mt-1">Send a message, voice note, photo or start a call!</p>
+        `;
+        container.appendChild(welcomeDiv);
+        return;
+      }
+
+      filtered.forEach(msg => {
+        const isMe = AppState.me ? isPhoneMatch(msg.senderPhone, AppState.me.phone) : false;
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-3 group relative`;
+
+        const senderTag = `<span class="text-[10px] font-bold text-slate-400 mb-0.5 px-1">${escapeHtml(msg.senderName || 'Member')}</span>`;
+
+        let bubbleContent = '';
+
+        if (msg.type === 'text') {
+          bubbleContent = `
+            ${senderTag}
+            <div class="relative px-4 py-2.5 rounded-2xl text-sm ${isMe ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-br-none shadow-md shadow-indigo-600/20' : 'bg-slate-800 text-slate-100 rounded-bl-none border border-slate-700/50'} max-w-[85%] break-words">
+              <p class="leading-relaxed font-normal">${escapeHtml(msg.text)}</p>
+              <div class="flex items-center justify-end gap-1 mt-1">
+                <span class="text-[10px] ${isMe ? 'text-indigo-200/80' : 'text-slate-400'}">${msg.timestamp}</span>
+                ${isMe ? '<span class="text-[11px] text-indigo-200">✓✓</span>' : ''}
+                <button onclick="deleteSingleMessage('${msg.id}')" title="Delete message" class="ml-1 opacity-60 hover:opacity-100 hover:text-rose-200 transition-opacity">
+                  <svg class="w-3 h-3 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </div>
+            </div>
+          `;
+        } else if (msg.type === 'audio') {
+          bubbleContent = `
+            ${senderTag}
+            <div class="relative p-3 rounded-2xl ${isMe ? 'bg-gradient-to-r from-indigo-700 to-blue-700 text-white rounded-br-none' : 'bg-slate-800 text-slate-100 rounded-bl-none border border-slate-700'} w-64 shadow-md">
+              <div class="flex items-center space-x-3">
+                <button onclick="playVoiceNote('${msg.id}', '${msg.audioUrl}')" id="playBtn-${msg.id}" class="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center shrink-0 transition-transform active:scale-90">
+                  <svg id="playIcon-${msg.id}" class="w-5 h-5 fill-current text-white" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                </button>
+                <div class="flex-1">
+                  <div class="flex items-center gap-0.5 h-6 mb-1">
+                    <span class="w-1 bg-white/60 h-2 rounded-full"></span>
+                    <span class="w-1 bg-white/80 h-4 rounded-full"></span>
+                    <span class="w-1 bg-white h-5 rounded-full"></span>
+                    <span class="w-1 bg-white/90 h-3 rounded-full"></span>
+                    <span class="w-1 bg-white/70 h-4 rounded-full"></span>
+                    <span class="w-1 bg-white h-6 rounded-full"></span>
+                    <span class="w-1 bg-white/80 h-3 rounded-full"></span>
+                    <span class="w-1 bg-white/60 h-5 rounded-full"></span>
+                  </div>
+                  <div class="flex items-center justify-between text-[10px] ${isMe ? 'text-indigo-200' : 'text-slate-400'}">
+                    <span>Voice Note (${msg.duration || '0:04'})</span>
+                    <div class="flex items-center gap-1">
+                      <span>${msg.timestamp}</span>
+                      <button onclick="deleteSingleMessage('${msg.id}')" title="Delete voice note" class="ml-1 opacity-70 hover:opacity-100">
+                        <svg class="w-3 h-3 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        } else if (msg.type === 'image') {
+          bubbleContent = `
+            ${senderTag}
+            <div class="relative p-1.5 rounded-2xl ${isMe ? 'bg-indigo-600 rounded-br-none' : 'bg-slate-800 rounded-bl-none'} max-w-[80%] overflow-hidden shadow-lg">
+              <img src="${msg.imageUrl}" class="rounded-xl object-cover max-h-60 w-full" alt="Shared photo">
+              <div class="px-1 pt-1.5 pb-0.5 flex items-center justify-between text-[10px] ${isMe ? 'text-indigo-100' : 'text-slate-400'}">
+                <span class="flex items-center gap-1 font-mono">🗜️ ${msg.compressionInfo || 'Compressed Photo'}</span>
+                <div class="flex items-center gap-1">
+                  <span>${msg.timestamp}</span>
+                  <button onclick="deleteSingleMessage('${msg.id}')" title="Delete photo" class="ml-1 opacity-70 hover:opacity-100 text-white">
+                    <svg class="w-3 h-3 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        } else if (msg.type === 'call_event') {
+          bubbleContent = `
+            <div class="px-3 py-1.5 rounded-xl bg-slate-800/60 border border-slate-700/40 text-[11px] text-slate-300 flex items-center gap-2">
+              <span>${msg.callType === 'video' ? '📹' : '📞'}</span>
+              <span>${msg.text}</span>
+              <span class="text-[10px] text-slate-400">${msg.timestamp}</span>
+              <button onclick="deleteSingleMessage('${msg.id}')" title="Delete log" class="ml-1 text-slate-500 hover:text-rose-400">
+                <svg class="w-3 h-3 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+          `;
+        }
+
+        msgDiv.innerHTML = bubbleContent;
+        container.appendChild(msgDiv);
+      });
+
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function triggerFloatingHeart(char = '👋') {
+      const container = document.getElementById('heartsContainer');
+      const heart = document.createElement('div');
+      heart.className = 'floating-particle text-2xl';
+      heart.textContent = char;
+      heart.style.left = `${Math.floor(Math.random() * 60) + 20}%`;
+      heart.style.bottom = '90px';
+      container.appendChild(heart);
+
+      setTimeout(() => heart.remove(), 1600);
+    }
+
+    function sendQuickHeart() {
+      const friendlyGreetings = [
+        "Hey there! 👋",
+        "Hello! Are you available to talk? 💬",
+        "Thumbs up! 👍",
+        "Hope you are having a great day! ✨",
+        "Let's connect soon 🚀"
+      ];
+      const randomText = friendlyGreetings[Math.floor(Math.random() * friendlyGreetings.length)];
+      
+      persistMessage({
+        id: 'msg-' + Date.now(),
+        text: randomText,
+        timestamp: getCurrentTimeFormatted(),
+        type: 'text'
+      });
+      playChime('msg');
+      triggerFloatingHeart('👋');
+      triggerFloatingHeart('✨');
+    }
+
+    function getAudioContext() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function startRingtone() {
+      try {
+        const ctx = getAudioContext();
+        if (ringtoneInterval) clearInterval(ringtoneInterval);
+
+        const playTonePair = () => {
+          const osc1 = ctx.createOscillator();
+          const osc2 = ctx.createOscillator();
+          const gain = ctx.createGain();
+
+          osc1.type = 'sine';
+          osc2.type = 'triangle';
+          osc1.frequency.setValueAtTime(440, ctx.currentTime);
+          osc2.frequency.setValueAtTime(480, ctx.currentTime);
+
+          gain.gain.setValueAtTime(0.001, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.1);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.2);
+
+          osc1.connect(gain);
+          osc2.connect(gain);
+          gain.connect(ctx.destination);
+
+          osc1.start();
+          osc2.start();
+          osc1.stop(ctx.currentTime + 1.2);
+          osc2.stop(ctx.currentTime + 1.2);
+        };
+
+        playTonePair();
+        ringtoneInterval = setInterval(playTonePair, 2800);
+      } catch (err) {
+        console.warn("Audio Context blocked:", err);
+      }
+    }
+
+    function stopRingtone() {
+      if (ringtoneInterval) {
+        clearInterval(ringtoneInterval);
+        ringtoneInterval = null;
+      }
+    }
+
+    function playChime(type = 'msg') {
+      try {
+        const ctx = getAudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+
+        if (type === 'msg') {
+          osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15);
+        } else if (type === 'call-end') {
+          osc.frequency.setValueAtTime(440, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(220, ctx.currentTime + 0.25);
+        } else if (type === 'record-start') {
+          osc.frequency.setValueAtTime(600, ctx.currentTime);
+          osc.frequency.setValueAtTime(800, ctx.currentTime + 0.08);
+        }
+
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.25);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start();
+        osc.stop(ctx.currentTime + 0.25);
+      } catch (e) {}
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function getCurrentTimeFormatted() {
+      const now = new Date();
+      return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function openMobileCompressor(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      AppState.compressor.currentRawFile = file;
+      AppState.compressor.originalSizeBytes = file.size;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          AppState.compressor.rawImageBitmap = img;
+          processImageCompression();
+          document.getElementById('compressorModal').classList.remove('hidden');
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+      event.target.value = '';
+    }
+
+    function setCompressionPreset(quality) {
+      AppState.compressor.quality = quality;
+
+      const btnLow = document.getElementById('presetLow');
+      const btnMed = document.getElementById('presetMed');
+      const btnHigh = document.getElementById('presetHigh');
+
+      [btnLow, btnMed, btnHigh].forEach(b => {
+        b.className = "py-2 px-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-medium border border-slate-700";
+      });
+
+      if (quality <= 0.4) {
+        btnLow.className = "py-2 px-2 bg-indigo-600/30 text-indigo-300 rounded-xl text-xs font-semibold border border-indigo-500";
+      } else if (quality <= 0.7) {
+        btnMed.className = "py-2 px-2 bg-indigo-600/30 text-indigo-300 rounded-xl text-xs font-semibold border border-indigo-500";
+      } else {
+        btnHigh.className = "py-2 px-2 bg-indigo-600/30 text-indigo-300 rounded-xl text-xs font-semibold border border-indigo-500";
+      }
+
+      processImageCompression();
+    }
+
+    function processImageCompression() {
+      const img = AppState.compressor.rawImageBitmap;
+      if (!img) return;
+
+      const maxDimension = 960;
+      let width = img.width;
+      let height = img.height;
+
+      if (width > height) {
+        if (width > maxDimension) {
+          height = Math.round((height * maxDimension) / width);
+          width = maxDimension;
+        }
+      } else {
+        if (height > maxDimension) {
+          width = Math.round((width * maxDimension) / height);
+          height = maxDimension;
+        }
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+
+        AppState.compressor.compressedBlob = blob;
+        AppState.compressor.compressedDataUrl = canvas.toDataURL('image/jpeg', AppState.compressor.quality);
+
+        document.getElementById('compressorPreviewImg').src = AppState.compressor.compressedDataUrl;
+        document.getElementById('originalSizeText').textContent = formatBytes(AppState.compressor.originalSizeBytes);
+        document.getElementById('compressedSizeText').textContent = formatBytes(blob.size);
+
+        const savings = Math.max(0, Math.round(((AppState.compressor.originalSizeBytes - blob.size) / AppState.compressor.originalSizeBytes) * 100));
+        document.getElementById('savingsPercentageBadge').textContent = `-${savings}% Data Saved!`;
+
+      }, 'image/jpeg', AppState.compressor.quality);
+    }
+
+    function formatBytes(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+      else return (bytes / 1048576).toFixed(2) + ' MB';
+    }
+
+    function closeCompressorModal() {
+      document.getElementById('compressorModal').classList.add('hidden');
+    }
+
+    function sendCompressedImageToChat() {
+      if (!AppState.compressor.compressedDataUrl) return;
+
+      const originalSize = formatBytes(AppState.compressor.originalSizeBytes);
+      const compressedSize = formatBytes(AppState.compressor.compressedBlob.size);
+
+      persistMessage({
+        id: 'msg-' + Date.now(),
+        imageUrl: AppState.compressor.compressedDataUrl,
+        compressionInfo: `${compressedSize} (saved from ${originalSize})`,
+        timestamp: getCurrentTimeFormatted(),
+        type: 'image'
+      });
+
+      playChime('msg');
+      closeCompressorModal();
+      showToast("Compressed photo sent! 🗜️");
+    }
+
+    let currentPlayingAudio = null;
+    let currentPlayingBtnId = null;
+
+    function playVoiceNote(msgId, audioUrl) {
+      if (currentPlayingAudio && currentPlayingBtnId === msgId) {
+        currentPlayingAudio.pause();
+        resetVoiceBtnIcon(msgId);
+        currentPlayingAudio = null;
+        currentPlayingBtnId = null;
+        return;
+      }
+
+      if (currentPlayingAudio) {
+        currentPlayingAudio.pause();
+        resetVoiceBtnIcon(currentPlayingBtnId);
+      }
+
+      const audio = new Audio(audioUrl);
+      currentPlayingAudio = audio;
+      currentPlayingBtnId = msgId;
+
+      const icon = document.getElementById(`playIcon-${msgId}`);
+      if (icon) {
+        icon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+      }
+
+      audio.play().catch(e => console.warn("Playback err:", e));
+
+      audio.onended = () => {
+        resetVoiceBtnIcon(msgId);
+        currentPlayingAudio = null;
+        currentPlayingBtnId = null;
+      };
+    }
+
+    function resetVoiceBtnIcon(msgId) {
+      const icon = document.getElementById(`playIcon-${msgId}`);
+      if (icon) {
+        icon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+      }
+    }
+
+    async function toggleVoiceRecording() {
+      if (AppState.voiceRecording.isRecording) {
+        stopAndSendVoiceRecording();
+      } else {
+        startVoiceRecording();
+      }
+    }
+
+    async function startVoiceRecording() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        AppState.voiceRecording.mediaRecorder = new MediaRecorder(stream);
+        AppState.voiceRecording.audioChunks = [];
+
+        AppState.voiceRecording.mediaRecorder.ondataavailable = event => {
+          AppState.voiceRecording.audioChunks.push(event.data);
+        };
+
+        AppState.voiceRecording.mediaRecorder.start();
+        AppState.voiceRecording.isRecording = true;
+        AppState.voiceRecording.seconds = 0;
+
+        playChime('record-start');
+        document.getElementById('recordingControls').classList.remove('hidden');
+
+        AppState.voiceRecording.timerInterval = setInterval(() => {
+          AppState.voiceRecording.seconds++;
+          const mins = Math.floor(AppState.voiceRecording.seconds / 60).toString().padStart(2, '0');
+          const secs = (AppState.voiceRecording.seconds % 60).toString().padStart(2, '0');
+          document.getElementById('recordingTimer').textContent = `${mins}:${secs}`;
+        }, 1000);
+
+      } catch (err) {
+        console.error("Microphone error:", err);
+        showToast("Microphone permission required for voice notes");
+      }
+    }
+
+    function stopAndSendVoiceRecording() {
+      if (!AppState.voiceRecording.mediaRecorder) return;
+
+      AppState.voiceRecording.mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(AppState.voiceRecording.audioChunks, { type: 'audio/webm' });
+        const reader = new FileReader();
+        reader.readAsDataURL(audioBlob);
+        reader.onloadend = () => {
+          const durationStr = `0:${AppState.voiceRecording.seconds.toString().padStart(2, '0')}`;
+
+          persistMessage({
+            id: 'msg-' + Date.now(),
+            audioUrl: reader.result,
+            duration: durationStr,
+            timestamp: getCurrentTimeFormatted(),
+            type: 'audio'
+          });
+
+          playChime('msg');
+          cleanupVoiceRecordingState();
+        };
+      };
+
+      AppState.voiceRecording.mediaRecorder.stop();
+      AppState.voiceRecording.mediaRecorder.stream.getTracks().forEach(track => track.stop());
+    }
+
+    function cancelVoiceRecording() {
+      if (AppState.voiceRecording.mediaRecorder) {
+        AppState.voiceRecording.mediaRecorder.stop();
+        AppState.voiceRecording.mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      }
+      cleanupVoiceRecordingState();
+      showToast("Voice recording canceled");
+    }
+
+    function cleanupVoiceRecordingState() {
+      clearInterval(AppState.voiceRecording.timerInterval);
+      AppState.voiceRecording.isRecording = false;
+      AppState.voiceRecording.seconds = 0;
+      document.getElementById('recordingControls').classList.add('hidden');
+      document.getElementById('recordingTimer').textContent = '00:00';
+    }
+
+    async function initiateCall(type) {
+      if (!AppState.activePartner) {
+        showToast("Please select a partner to call");
+        return;
+      }
+
+      AppState.activeCall.type = type;
+      AppState.activeCall.status = 'calling';
+
+      showToast(`Calling ${AppState.activePartner.name}...`);
+      startCallScreen(type);
+    }
+
+    async function startCallScreen(type) {
+      const callScreen = document.getElementById('activeCallScreen');
+      const videoBadge = document.getElementById('callTypeBadge');
+      const partnerVideo = document.getElementById('partnerVideo');
+      const selfVideo = document.getElementById('selfVideo');
+      const audioAvatarView = document.getElementById('audioCallAvatarView');
+      const selfCameraContainer = document.getElementById('selfCameraContainer');
+      const callPartnerName = document.getElementById('activeCallPartnerName');
+
+      if (AppState.activePartner) {
+        callPartnerName.textContent = AppState.activePartner.name;
+      }
+
+      callScreen.classList.remove('hidden');
+      videoBadge.textContent = type === 'video' ? 'A&T HD Video' : 'A&T HD Voice';
+
+      try {
+        const constraints = {
+          audio: true,
+          video: type === 'video' ? { facingMode: AppState.activeCall.facingMode } : false
+        };
+
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        AppState.activeCall.localStream = stream;
+
+        if (type === 'video') {
+          selfVideo.srcObject = stream;
+          partnerVideo.srcObject = stream;
+          selfCameraContainer.classList.remove('hidden');
+          audioAvatarView.classList.add('hidden');
+        } else {
+          selfCameraContainer.classList.add('hidden');
+          audioAvatarView.classList.remove('hidden');
+        }
+
+      } catch (err) {
+        console.warn("Media devices error:", err);
+        selfCameraContainer.classList.add('hidden');
+        audioAvatarView.classList.remove('hidden');
+      }
+
+      startCallTimer();
+    }
+
+    function startCallTimer() {
+      AppState.activeCall.durationSeconds = 0;
+      if (AppState.activeCall.timerInterval) clearInterval(AppState.activeCall.timerInterval);
+
+      AppState.activeCall.timerInterval = setInterval(() => {
+        AppState.activeCall.durationSeconds++;
+        const mins = Math.floor(AppState.activeCall.durationSeconds / 60).toString().padStart(2, '0');
+        const secs = (AppState.activeCall.durationSeconds % 60).toString().padStart(2, '0');
+        document.getElementById('activeCallDuration').textContent = `${mins}:${secs}`;
+      }, 1000);
+    }
+
+    function endActiveCall() {
+      playChime('call-end');
+      if (AppState.activeCall.timerInterval) {
+        clearInterval(AppState.activeCall.timerInterval);
+      }
+
+      if (AppState.activeCall.localStream) {
+        AppState.activeCall.localStream.getTracks().forEach(track => track.stop());
+        AppState.activeCall.localStream = null;
+      }
+
+      const durationStr = document.getElementById('activeCallDuration').textContent;
+      document.getElementById('activeCallScreen').classList.add('hidden');
+
+      if (AppState.activeCall.durationSeconds > 0 && AppState.activePartner) {
+        persistMessage({
+          id: 'call-' + Date.now(),
+          callType: AppState.activeCall.type,
+          text: `A&T Call Ended • Duration: ${durationStr}`,
+          timestamp: getCurrentTimeFormatted(),
+          type: 'call_event'
+        });
+      }
+
+      AppState.activeCall.status = 'idle';
+      AppState.activeCall.durationSeconds = 0;
+      document.getElementById('activeCallDuration').textContent = '00:00';
+    }
+
+    function toggleMic() {
+      if (!AppState.activeCall.localStream) return;
+      const audioTracks = AppState.activeCall.localStream.getAudioTracks();
+      if (audioTracks.length > 0) {
+        AppState.activeCall.isMuted = !AppState.activeCall.isMuted;
+        audioTracks[0].enabled = !AppState.activeCall.isMuted;
+        const btn = document.getElementById('toggleMicBtn');
+        if (AppState.activeCall.isMuted) {
+          btn.classList.add('bg-rose-600');
+          btn.classList.remove('bg-slate-800/90');
+          showToast("Microphone Muted");
+        } else {
+          btn.classList.remove('bg-rose-600');
+          btn.classList.add('bg-slate-800/90');
+          showToast("Microphone Unmuted");
+        }
+      }
+    }
+
+    function toggleCamera() {
+      if (!AppState.activeCall.localStream) return;
+      const videoTracks = AppState.activeCall.localStream.getVideoTracks();
+      if (videoTracks.length > 0) {
+        AppState.activeCall.isCameraOff = !AppState.activeCall.isCameraOff;
+        videoTracks[0].enabled = !AppState.activeCall.isCameraOff;
+        const btn = document.getElementById('toggleCamBtn');
+        if (AppState.activeCall.isCameraOff) {
+          btn.classList.add('bg-rose-600');
+          btn.classList.remove('bg-slate-800/90');
+          showToast("Camera Turned Off");
+        } else {
+          btn.classList.remove('bg-rose-600');
+          btn.classList.add('bg-slate-800/90');
+          showToast("Camera On");
+        }
+      }
+    }
+
+    async function switchCameraFacing() {
+      if (AppState.activeCall.type !== 'video' || !AppState.activeCall.localStream) return;
+      AppState.activeCall.facingMode = AppState.activeCall.facingMode === 'user' ? 'environment' : 'user';
+
+      AppState.activeCall.localStream.getTracks().forEach(t => t.stop());
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+          video: { facingMode: AppState.activeCall.facingMode }
+        });
+        AppState.activeCall.localStream = stream;
+        document.getElementById('selfVideo').srcObject = stream;
+        document.getElementById('partnerVideo').srcObject = stream;
+        showToast("Switched Camera");
+      } catch (err) {
+        console.warn("Camera switch error:", err);
+      }
+    }
+
+    let pendingIncomingType = 'video';
+
+    function triggerSimulatedIncomingCall(type = 'video') {
+      document.getElementById('profileModal').classList.add('hidden');
+      pendingIncomingType = type;
+
+      const modal = document.getElementById('incomingCallModal');
+      const text = document.getElementById('incomingCallType');
+      text.textContent = type === 'video' ? 'Incoming A&T Video Call...' : 'Incoming A&T Voice Call...';
+
+      modal.classList.remove('hidden');
+      startRingtone();
+    }
+
+    function acceptIncomingCall() {
+      stopRingtone();
+      document.getElementById('incomingCallModal').classList.add('hidden');
+      startCallScreen(pendingIncomingType);
+    }
+
+    function rejectIncomingCall() {
+      stopRingtone();
+      document.getElementById('incomingCallModal').classList.add('hidden');
+      playChime('call-end');
+
+      if (AppState.activePartner) {
+        persistMessage({
+          id: 'call-' + Date.now(),
+          callType: pendingIncomingType,
+          text: `Missed ${pendingIncomingType === 'video' ? 'Video' : 'Voice'} Call`,
+          timestamp: getCurrentTimeFormatted(),
+          type: 'call_event'
+        });
+      }
+      showToast("Call Declined");
+    }
+
+    function toggleCoupleEmojiDrawer() {
+      const drawer = document.getElementById('coupleEmojiDrawer');
+      drawer.classList.toggle('hidden');
+    }
+
+    function insertEmoji(emojiChar) {
+      const input = document.getElementById('messageInput');
+      input.value += emojiChar;
+      input.focus();
+      triggerFloatingHeart(emojiChar);
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const btn = document.getElementById('pwaInstallBtnDirectory');
+      if (btn) btn.classList.remove('hidden');
+    });
+
+    function triggerPWAInstall() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choice) => {
+          if (choice.outcome === 'accepted') {
+            showToast("Installing A&T App... 🎉");
+          }
+          deferredPrompt = null;
+        });
+      } else {
+        document.getElementById('installGuideModal').classList.remove('hidden');
+      }
+    }
+
+    function closeInstallModal() {
+      document.getElementById('installGuideModal').classList.add('hidden');
+    }
+
+    function toggleProfileDetails() {
+      document.getElementById('profileModal').classList.toggle('hidden');
+    }
+
+    async function logoutCurrentUser() {
+      if (auth) {
+        try {
+          await signOut(auth);
+        } catch (err) {
+          console.warn("Logout error:", err);
+        }
+      }
+
+      AppState.me = null;
+      AppState.activePartner = null;
+      document.getElementById('profileModal').classList.add('hidden');
+      document.getElementById('activeChatView').classList.add('hidden');
+      document.getElementById('directoryView').classList.remove('hidden');
+      document.getElementById('registrationModal').classList.remove('hidden');
+      document.getElementById('regUserName').value = '';
+      document.getElementById('regUserPhone').value = '';
+      showToast("Logged out successfully 👋");
+    }
+
+    function showToast(text) {
+      const toast = document.getElementById('toast');
+      const toastText = document.getElementById('toastText');
+      toastText.textContent = text;
+      toast.classList.remove('opacity-0');
+      toast.classList.add('opacity-100');
+
+      setTimeout(() => {
+        toast.classList.remove('opacity-100');
+        toast.classList.add('opacity-0');
+      }, 2500);
+    }
+
+    window.handleRegistration = handleRegistration;
+    window.logoutCurrentUser = logoutCurrentUser;
+    window.performNumberSearch = performNumberSearch;
+    window.startChatWithUser = startChatWithUser;
+    window.backToDirectoryView = backToDirectoryView;
+    window.quickCallFromSearch = quickCallFromSearch;
+    window.toggleProfileDetails = toggleProfileDetails;
+    window.toggleCoupleEmojiDrawer = toggleCoupleEmojiDrawer;
+    window.insertEmoji = insertEmoji;
+    window.sendQuickHeart = sendQuickHeart;
+    window.openMobileCompressor = openMobileCompressor;
+    window.setCompressionPreset = setCompressionPreset;
+    window.closeCompressorModal = closeCompressorModal;
+    window.sendCompressedImageToChat = sendCompressedImageToChat;
+    window.handleSendTextMessage = handleSendTextMessage;
+    window.toggleVoiceRecording = toggleVoiceRecording;
+    window.stopAndSendVoiceRecording = stopAndSendVoiceRecording;
+    window.cancelVoiceRecording = cancelVoiceRecording;
+    window.playVoiceNote = playVoiceNote;
+    window.initiateCall = initiateCall;
+    window.endActiveCall = endActiveCall;
+    window.toggleMic = toggleMic;
+    window.toggleCamera = toggleCamera;
+    window.switchCameraFacing = switchCameraFacing;
+    window.triggerSimulatedIncomingCall = triggerSimulatedIncomingCall;
+    window.acceptIncomingCall = acceptIncomingCall;
+    window.rejectIncomingCall = rejectIncomingCall;
+    window.triggerPWAInstall = triggerPWAInstall;
+    window.closeInstallModal = closeInstallModal;
+    window.promptClearAllChats = promptClearAllChats;
+    window.closeConfirmDeleteModal = closeConfirmDeleteModal;
+    window.confirmClearAllChats = confirmClearAllChats;
+    window.deleteSingleMessage = deleteSingleMessage;
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initCloudStorage();
+    });
+  </script>
+</body>
+</html>
